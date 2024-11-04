@@ -26,7 +26,7 @@ A Python script for scanning SSH ports and attempting brute-force logins.
 
 1. Run the script:
    ```bash
-   python sshbftcpscan.py
+   python ssh.py
 2. Enter the target IP address when prompted.
 3. Specify the paths to your username and password files.
 4. Follow the prompts to perform the scan and attempt brute-force logins.
