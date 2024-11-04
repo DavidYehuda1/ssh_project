@@ -33,12 +33,10 @@ A Python script for scanning SSH ports and attempting brute-force logins.
 
 ## Example files
 ### Usernames File
-    ```plaintext
     test
     kali
     admin
 ### Passwords File
-    ```plaintext
     password123
     letmein
     kali
