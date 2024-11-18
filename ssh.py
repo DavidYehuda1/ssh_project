@@ -33,7 +33,7 @@ def scan_ports(ip):
     print("[+] Starting port scan!")
     print("__________________________________________________")
     open_ports = []
-    for port in range(1, 100):
+    for port in range(1,65535):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(0.5)
         result = sock.connect_ex((ip, port))
