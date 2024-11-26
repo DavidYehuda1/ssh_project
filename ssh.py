@@ -1,12 +1,17 @@
+from threading import Thread, Lock
 import os
 import socket
 try:
-    os.system("pip install scapy paramiko >nul 2>&1")
+    os.system("pip install paramiko >nul 2>&1")
 except Exception as e :
     pass
 import paramiko
 import select
 import sys
+
+
+open_ports = []  # Shared list to store open ports
+lock = Lock()    # Lock to ensure thread-safe operations
 
 def is_target_alive(ip):  # Sends a ping request to check if an host is alive.
     try:
@@ -27,22 +32,51 @@ def is_target_alive(ip):  # Sends a ping request to check if an host is alive.
         print(f"Error pinging target: {e}")
         return False
 
-
-def scan_ports(ip):
-    print("__________________________________________________")
-    print("[+] Starting port scan!")
-    print("__________________________________________________")
-    open_ports = []
-    for port in range(1,65535):
+def scan_port(ip, port):
+    """
+    Scans a single port on the given IP.
+    """
+    try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(0.5)
         result = sock.connect_ex((ip, port))
         if result == 0:
-            open_ports.append(port)
+            with lock:  # Thread-safe addition to the list
+                open_ports.append(port)
+    except Exception as e:
+        print(f"Error scanning port {port}: {e}")
+    finally:
         sock.close()
-    print(f"[-] Open ports: {open_ports}")
+
+
+def scan_ports(ip):
+    """
+    Scans all ports on the given IP using multithreading.
+    """
+    print("__________________________________________________")
+    print("[+] Starting port scan with threads!")
+    print("__________________________________________________")
+
+    threads = []  # To keep track of all threads
+    for port in range(1, 65535):  # Scanning ports from 1 to 65535
+        thread = Thread(target=scan_port, args=(ip, port))  # Create a thread for each port
+        threads.append(thread)
+        thread.start()
+
+        # Limit active threads to 100 at a time to avoid system overload
+        if len(threads) >= 100:
+            for t in threads:
+                t.join()  # Wait for all threads to finish
+            threads = []  # Clear the thread list to start new threads
+
+    # Join any remaining threads after the loop
+    for t in threads:
+        t.join()
+
+    print(f"[-] Open ports: {sorted(open_ports)}")
     print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
     return open_ports
+
 
 def attempt_ssh_login(ip, username, password):
     print("")
