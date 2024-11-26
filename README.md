@@ -5,22 +5,23 @@ A Python script for scanning SSH ports and attempting brute-force logins.
 ## Features
 
 - Pings target to check if it's alive.
-- Scans ports to identify open SSH port (default: 22).
+- Multithreaded port scanning to efficiently identify open ports across a wide range.
 - Attempts SSH login using brute-force from specified username and password files.
 - Provides an interactive shell upon successful login.
+- Detailed logging of scan results and authentication attempts with timestamped records for analysis.
 
 ## Requirements
 
 - Python 3.x
 - `paramiko`
-- `scapy`
+
 
 ## Installation
 
 1. Clone the repository or download the ZIP file.
 2. Install the required packages:
    ```bash
-   pip install paramiko scapy
+   pip install paramiko 
    
 ## Usage
 
